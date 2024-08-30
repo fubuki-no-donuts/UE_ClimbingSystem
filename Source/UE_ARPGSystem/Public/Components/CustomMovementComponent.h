@@ -24,6 +24,8 @@ class UE_ARPGSYSTEM_API UCustomMovementComponent : public UCharacterMovementComp
 	GENERATED_BODY()
 
 public:
+	UCustomMovementComponent();
+
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 #pragma region ClimbCore

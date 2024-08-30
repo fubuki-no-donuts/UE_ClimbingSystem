@@ -8,13 +8,16 @@
 #include "UE_ARPGSystem/DebugHelper/DebugHelper.h"
 
 
-void UCustomMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
-	FActorComponentTickFunction* ThisTickFunction)
+UCustomMovementComponent::UCustomMovementComponent()
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
 	// A default climbable surface type
 	ClimbableSurfaceTraceTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldStatic));
+}
+
+void UCustomMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
+                                             FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
 #pragma region ClimbCore
