@@ -104,9 +104,26 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 void ABaseCharacter::Move(const FInputActionValue& Value)
 {
-	FVector2D MovementVector = Value.Get<FVector2D>();
+	if (!CustomMovementComponent)
+	{
+		return;
+	}
 
-	if (Controller != nullptr)
+	if (CustomMovementComponent->IsClimbing())
+	{
+		HandleClimbMovementInput(Value);
+	}
+	else
+	{
+		HandleGroundMovementInput(Value);
+	}
+}
+
+void ABaseCharacter::HandleGroundMovementInput(const FInputActionValue& Value)
+{
+	const FVector2D MovementVector = Value.Get<FVector2D>();
+
+	if (Controller != nullptr) 
 	{
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
@@ -135,18 +152,36 @@ void ABaseCharacter::Look(const FInputActionValue& Value)
 
 #pragma region ClimbSystem
 
+void ABaseCharacter::HandleClimbMovementInput(const FInputActionValue& Value)
+{
+	const FVector2D MovementVector = Value.Get<FVector2D>();
+
+	const FVector ForwardDirection = FVector::CrossProduct(
+		-CustomMovementComponent->GetClimbableSurfaceNormal(),
+		GetActorRightVector()
+	);
+
+	const FVector RightDirection = FVector::CrossProduct(
+		GetActorUpVector(),
+		-CustomMovementComponent->GetClimbableSurfaceNormal()
+	);
+
+	AddMovementInput(ForwardDirection, MovementVector.Y);
+	AddMovementInput(RightDirection, MovementVector.X);
+}
+
 void ABaseCharacter::OnClimbActionStarted(const FInputActionValue& Value)
 {
 	// Test
 	//Debug::Print(TEXT("Climbing Action Started!"));
 
-	if(CustomMovementComponent == nullptr) 
+	if (CustomMovementComponent == nullptr) 
 	{
 		Debug::Print(TEXT("There is no CustomMovementComponent exist!"));
 		return;
 	}
 
-	if(CustomMovementComponent->IsClimbing())
+	if (CustomMovementComponent->IsClimbing())
 	{
 		CustomMovementComponent->ToggleClimbing(false);
 	}

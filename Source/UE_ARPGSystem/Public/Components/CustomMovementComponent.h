@@ -26,7 +26,27 @@ class UE_ARPGSYSTEM_API UCustomMovementComponent : public UCharacterMovementComp
 public:
 	UCustomMovementComponent();
 
+#pragma region OverridenFunctions
+
+protected:
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	virtual void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode) override;
+
+	virtual void PhysCustom(float deltaTime, int32 Iterations) override;
+
+	virtual float GetMaxSpeed() const override;
+
+	virtual float GetMaxAcceleration() const override;
+
+#pragma endregion
+
+#pragma region Getter & Setter
+
+public:
+	FORCEINLINE FVector GetClimbableSurfaceNormal() const { return CurrentClimbableSurfaceNormal; }
+
+#pragma endregion
 
 #pragma region ClimbCore
 
@@ -57,17 +77,62 @@ private:
 
 	/**
 	 * @brief Start Climbing
+	 *
 	 */
 	void StartClimbing();
 
 	/**
 	 * @brief Stop Climbing
+	 *
 	 */
 	void StopClimbing();
 
-protected:
+	/**
+	 * @brief Handle Climbing Physic
+	 *
+	 */
+	void PhysClimb(float deltaTime, int32 Iterations);
 
-	virtual void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode) override;
+	/**
+	 * @breif Process Climbable Surface Info
+	 *
+	 */
+	void ProcessClimbableSurfaceInfo();
+
+	/**
+	 * @brief Should Character Stop Climbing
+	 *
+	 * @return bool Return true if character should stop climbing
+	 */
+	bool CheckShouldStopClimbing();
+
+	/**
+	 * @brief Return the climb rotation
+	 *
+	 * @param DeltaTime		Used for interpolation
+	 * @return FQuat		The Rotation while Climbing
+	 */
+	FQuat GetClimbRotation(float DeltaTime);
+
+	/**
+	 * @brief Snap Character's movement to climbable surface
+	 *
+	 * @param DeltaTime		Used for interpolation
+	 */
+	void SnapMovementToClimbableSurfaces(float DeltaTime);
+
+#pragma endregion
+
+#pragma region ClimbCoreVariable
+
+private:
+
+	/* Climbable Surfaces that detected */
+	TArray<FHitResult> ClimbableSurfacesTracedResults;
+
+	FVector CurrentClimbableSurfaceLocation;
+
+	FVector CurrentClimbableSurfaceNormal;
 
 #pragma endregion
 
@@ -90,23 +155,14 @@ private:
 	/**
 	 * @brief Performs a line trace at eye height to decide whether to climb
 	 *
-	 * @param Start Where trace starts
-	 * @param End Where trace ends
-	 * @param bShowDebugShape Whether to show the trace's debug shape
-	 * @param bDrawPersistentShapes Continue to Draw
-	 * @return FHitResult Return the hit results
+	 * @param Start						Where trace starts
+	 * @param End						Where trace ends
+	 * @param bShowDebugShape			Whether to show the trace's debug shape
+	 * @param bDrawPersistentShapes		Continue to Draw
+	 * @return FHitResult				Return the hit results
 	 */
 	FHitResult DoLineTraceSingleByObject(const FVector& Start, const FVector& End, 
 		bool bShowDebugShape = false, bool bDrawPersistentShapes = false);
-
-#pragma endregion
-
-#pragma region ClimbCoreVariable
-
-private:
-
-	/* Climbable Surfaces that detected */
-	TArray<FHitResult> ClimbableSurfacesTracedResults;
 
 #pragma endregion
 
@@ -129,6 +185,23 @@ private:
 		meta=(AllowPrivateAccess = "true"))
 	float ClimbCapsuleTraceHalfHeight = 72.f;
 
+	/*  */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement: Climbing",
+		meta=(AllowPrivateAccess = "true"))
+	float MaxBreakClimbDeceleration = 400.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement: Climbing",
+		meta=(AllowPrivateAccess = "true"))
+	float MaxClimbSpeed = 200.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement: Climbing",
+		meta=(AllowPrivateAccess = "true"))
+	float MaxClimbAcceleration = 300.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement: Climbing",
+		meta=(AllowPrivateAccess = "true"))
+	float MaxClimbableDegree = 60.f;
+
 #pragma endregion
 
 public:
@@ -136,14 +209,14 @@ public:
 	/**
 	 * @brief Toggle Climbing Movement
 	 *
-	 * @param bEnableClimb Whether to enable climbing
+	 * @param bEnableClimb		Whether to enable climbing
 	 */
 	void ToggleClimbing(bool bEnableClimb);
 
 	/**
-	 * @brief 是否处于攀爬状态
+	 * @brief Check if owner is climbing now
 	 *
-	 * @return bool 角色处于攀爬状态则为true，非攀爬状态则为false
+	 * @return bool			Return true if owner is climbing, otherwise return false
 	 */
 	bool IsClimbing() const;
 };
