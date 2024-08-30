@@ -28,7 +28,7 @@ class UE_ARPGSYSTEM_API ABaseCharacter : public ACharacter
 
 public:
 	// Sets default values for this character's properties
-	ABaseCharacter();
+	ABaseCharacter(const FObjectInitializer& ObjectInitializer);
 
 protected:
 	// Called when the game starts or when spawned
@@ -95,5 +95,27 @@ private:
 
 #pragma endregion
 
+#pragma region ClimbSystem
+
+public:
+	/* Custom Movement Component */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	UCustomMovementComponent* CustomMovementComponent;
+
+	/* Climb Action Input Mapping */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* ClimbAction;
+
+	/**
+	 * @brief Climb Action when input mapping triggered
+	 *
+	 * @param Value Movement input vector
+	 */
+	void OnClimbActionStarted(const FInputActionValue& Value);
+
+	/* Returns CustomMovementComponent subobject */
+	FORCEINLINE class UCustomMovementComponent* GetCustomMovementComponent() const { return CustomMovementComponent; }
+
+#pragma endregion
 
 };

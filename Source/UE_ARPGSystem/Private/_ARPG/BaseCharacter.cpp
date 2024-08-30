@@ -5,7 +5,8 @@
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
+//#include "GameFramework/CharacterMovementComponent.h"
+#include "Components/CustomMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Controller.h"
 #include "EnhancedInputComponent.h"
@@ -17,7 +18,8 @@
 DEFINE_LOG_CATEGORY(LogBaseCharacter);
 
 // Sets default values
-ABaseCharacter::ABaseCharacter()
+ABaseCharacter::ABaseCharacter(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UCustomMovementComponent>(ACharacter::CharacterMovementComponentName))
 {
 	// Set size for collision capsule
  	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -26,6 +28,9 @@ ABaseCharacter::ABaseCharacter()
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
+
+	// Custom Movement Component
+	CustomMovementComponent = Cast<UCustomMovementComponent>(GetCharacterMovement());
 
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
@@ -85,6 +90,9 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABaseCharacter::Look);
+
+		// Climbing
+		EnhancedInputComponent->BindAction(ClimbAction, ETriggerEvent::Started, this, &ABaseCharacter::OnClimbActionStarted);
 	}
 	else
 	{
@@ -120,6 +128,31 @@ void ABaseCharacter::Look(const FInputActionValue& Value)
 	{
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
+	}
+}
+
+#pragma endregion
+
+#pragma region ClimbSystem
+
+void ABaseCharacter::OnClimbActionStarted(const FInputActionValue& Value)
+{
+	// Test
+	//Debug::Print(TEXT("Climbing Action Started!"));
+
+	if(CustomMovementComponent == nullptr) 
+	{
+		Debug::Print(TEXT("There is no CustomMovementComponent exist!"));
+		return;
+	}
+
+	if(CustomMovementComponent->IsClimbing())
+	{
+		CustomMovementComponent->ToggleClimbing(false);
+	}
+	else
+	{
+		CustomMovementComponent->ToggleClimbing(true);
 	}
 }
 
