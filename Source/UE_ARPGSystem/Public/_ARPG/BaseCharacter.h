@@ -86,6 +86,8 @@ private:
 	 */
 	void Move(const FInputActionValue& Value);
 
+	void HandleGroundMovementInput(const FInputActionValue& Value);
+
 	/**
 	 * @brief Called for looking input
 	 *
@@ -105,6 +107,8 @@ public:
 	/* Climb Action Input Mapping */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* ClimbAction;
+
+	void HandleClimbMovementInput(const FInputActionValue& Value);
 
 	/**
 	 * @brief Climb Action when input mapping triggered
