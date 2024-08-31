@@ -4,6 +4,7 @@
 #include "Components/CustomMovementComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "_ARPG/BaseCharacter.h"
 #include "UE_ARPGSystem/DebugHelper/DebugHelper.h"
 
@@ -12,6 +13,19 @@ UCustomMovementComponent::UCustomMovementComponent()
 {
 	// A default climbable surface type
 	ClimbableSurfaceTraceTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldStatic));
+}
+
+void UCustomMovementComponent::BeginPlay()
+{
+	Super::BeginPlay();
+
+	OwningPlayerAnimInstance = CharacterOwner->GetMesh()->GetAnimInstance();
+
+	if (OwningPlayerAnimInstance)
+	{
+		OwningPlayerAnimInstance->OnMontageEnded.AddDynamic(this, &UCustomMovementComponent::OnClimbMontageEnded);
+		OwningPlayerAnimInstance->OnMontageBlendingOut.AddDynamic(this, &UCustomMovementComponent::OnClimbMontageEnded);
+	}
 }
 
 #pragma region OverridenFunctions
@@ -24,12 +38,14 @@ void UCustomMovementComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 
 void UCustomMovementComponent::OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode)
 {
+	// Enter Climbing
 	if (IsClimbing())
 	{
 		bOrientRotationToMovement = false;
 		CharacterOwner->GetCapsuleComponent()->SetCapsuleHalfHeight(48.f); // Set Height to Half of original height
 	}
 
+	// Exit Climbing
 	if (PreviousMovementMode == MOVE_Custom && PreviousCustomMode == ECustomMovementMode::MOVE_Climb)
 	{
 		bOrientRotationToMovement = true;
@@ -48,6 +64,7 @@ void UCustomMovementComponent::OnMovementModeChanged(EMovementMode PreviousMovem
 
 void UCustomMovementComponent::PhysCustom(float deltaTime, int32 Iterations)
 {
+	// Handle Climbing Phys
 	if (IsClimbing())
 	{
 		PhysClimb(deltaTime, Iterations);
@@ -58,22 +75,22 @@ void UCustomMovementComponent::PhysCustom(float deltaTime, int32 Iterations)
 
 float UCustomMovementComponent::GetMaxSpeed() const
 {
-	if (!IsClimbing())
+	if (IsClimbing())
 	{
-		return Super::GetMaxSpeed();
+		return MaxClimbSpeed;
 	}
 
-	return MaxClimbSpeed;
+	return Super::GetMaxSpeed();
 }
 
 float UCustomMovementComponent::GetMaxAcceleration() const
 {
-	if (!IsClimbing())
+	if (IsClimbing())
 	{
-		return Super::GetMaxAcceleration();
+		return MaxClimbAcceleration;
 	}
 
-	return MaxClimbAcceleration;
+	return Super::GetMaxAcceleration();
 }
 
 #pragma endregion
@@ -86,7 +103,7 @@ void UCustomMovementComponent::ToggleClimbing(bool bEnableClimb)
 	{
 		if (CanStartClimbing())
 		{
-			StartClimbing(); // Enter Climbing State
+			PlayClimbMontage(IdleToClimbMontage);
 		}
 		else
 		{
@@ -133,7 +150,7 @@ void UCustomMovementComponent::PhysClimb(float deltaTime, int32 Iterations)
 	ProcessClimbableSurfaceInfo(); // Handle the surfaces
 
 	/* Check if we should stop climbing */
-	if (CheckShouldStopClimbing())
+	if (CheckShouldStopClimbing() || CheckHasReachedFloor())
 	{
 		StopClimbing();
 	}
@@ -193,6 +210,7 @@ void UCustomMovementComponent::ProcessClimbableSurfaceInfo()
 	//Debug::Print(TEXT("CurrentClimbableSurfaceNormal = " + CurrentClimbableSurfaceNormal.ToCompactString()), FColor::Cyan, 1);
 }
 
+// Check Climbable Wall
 bool UCustomMovementComponent::CheckShouldStopClimbing()
 {
 	if (ClimbableSurfacesTracedResults.IsEmpty())
@@ -203,11 +221,44 @@ bool UCustomMovementComponent::CheckShouldStopClimbing()
 	const float DotResult = FVector::DotProduct(CurrentClimbableSurfaceNormal, FVector::UpVector);
 	const float DegreeDiff = FMath::RadiansToDegrees(FMath::Acos(DotResult));
 
-	if (DegreeDiff <= MaxClimbableDegree)
+	if (DegreeDiff <= MaxClimbableDegree) // small degree can not consider a wall
 	{
 		return true;
 	}
 
+	return false;
+}
+
+// Check UnClimbable
+bool UCustomMovementComponent::CheckHasReachedFloor()
+{
+	const FVector DownVector = -UpdatedComponent->GetUpVector();
+	const FVector StartOffset = DownVector * MinimumHeightToClimb;
+
+	const FVector Start = UpdatedComponent->GetComponentLocation() + StartOffset;
+	const FVector End = Start + DownVector;
+
+	TArray<FHitResult> PossibleFloorHits = DoCapsuleTraceMultiByObject(Start, End, true);
+
+	if (PossibleFloorHits.IsEmpty())
+	{
+		return false;
+	}
+
+	for (const FHitResult& PossibleFloorHit : PossibleFloorHits)
+	{
+		bool bCompleteFlatFloorReached = FVector::Parallel(-PossibleFloorHit.ImpactNormal, FVector::UpVector);
+
+		const float DotFloorNormalAndUpVector = FVector::DotProduct(PossibleFloorHit.ImpactNormal, FVector::UpVector);
+
+		if (DotFloorNormalAndUpVector > 0 &&  // Floor's normal need to go up
+			FMath::RadiansToDegrees(FMath::Acos(DotFloorNormalAndUpVector)) <= MaxClimbableDegree && // Large degree should consider as wall, not floor
+			//bCompleteFlatFloorReached && 
+			GetUnrotatedClimbVelocity().Z < -10.f)
+		{
+			return true;
+		}
+	}
 	return false;
 }
 
@@ -247,9 +298,32 @@ void UCustomMovementComponent::SnapMovementToClimbableSurfaces(float DeltaTime)
 		true);
 }
 
+void UCustomMovementComponent::PlayClimbMontage(UAnimMontage* MontageToPlay)
+{
+	if (!MontageToPlay || !OwningPlayerAnimInstance || OwningPlayerAnimInstance->IsAnyMontagePlaying())
+	{
+		return ;
+	}
+
+	OwningPlayerAnimInstance->Montage_Play(MontageToPlay);
+}
+
+void UCustomMovementComponent::OnClimbMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	if (Montage == IdleToClimbMontage)
+	{
+		StartClimbing();
+	}
+}
+
 bool UCustomMovementComponent::IsClimbing() const
 {
 	return MovementMode == MOVE_Custom && CustomMovementMode == ECustomMovementMode::MOVE_Climb;
+}
+
+FVector UCustomMovementComponent::GetUnrotatedClimbVelocity() const
+{
+	return UKismetMathLibrary::Quat_UnrotateVector(UpdatedComponent->GetComponentQuat(), Velocity);
 }
 
 bool UCustomMovementComponent::TraceClimbableSurfaces()

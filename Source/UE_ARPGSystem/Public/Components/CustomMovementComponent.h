@@ -15,6 +15,9 @@ namespace ECustomMovementMode
 	};
 }
 
+class UAnimMontage;
+class UAnimInstance;
+
 /**
  * 
  */
@@ -29,6 +32,8 @@ public:
 #pragma region OverridenFunctions
 
 protected:
+	virtual void BeginPlay() override;
+
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	virtual void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode) override;
@@ -49,6 +54,24 @@ public:
 #pragma endregion
 
 #pragma region ClimbCore
+
+public:
+
+	/**
+	 * @brief Toggle Climbing Movement
+	 *
+	 * @param bEnableClimb		Whether to enable climbing
+	 */
+	void ToggleClimbing(bool bEnableClimb);
+
+	/**
+	 * @brief Check if owner is climbing now
+	 *
+	 * @return bool			Return true if owner is climbing, otherwise return false
+	 */
+	bool IsClimbing() const;
+
+	FVector GetUnrotatedClimbVelocity() const;
 
 private:
 
@@ -102,9 +125,16 @@ private:
 	/**
 	 * @brief Should Character Stop Climbing
 	 *
-	 * @return bool Return true if character should stop climbing
+	 * @return bool			Return true if character should stop climbing
 	 */
 	bool CheckShouldStopClimbing();
+
+	/**
+	 * @brief Reached floor or not
+	 *
+	 * @return bool			Return true if reached floor
+	 */
+	bool CheckHasReachedFloor();
 
 	/**
 	 * @brief Return the climb rotation
@@ -121,6 +151,16 @@ private:
 	 */
 	void SnapMovementToClimbableSurfaces(float DeltaTime);
 
+	/**
+	 * @brief Play the Input Montage
+	 *
+	 * @param MontageToPlay			The montage need to play
+	 */
+	void PlayClimbMontage(UAnimMontage* MontageToPlay);
+
+	UFUNCTION()
+	void OnClimbMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
 #pragma endregion
 
 #pragma region ClimbCoreVariable
@@ -133,6 +173,9 @@ private:
 	FVector CurrentClimbableSurfaceLocation;
 
 	FVector CurrentClimbableSurfaceNormal;
+
+	UPROPERTY()
+	UAnimInstance* OwningPlayerAnimInstance;
 
 #pragma endregion
 
@@ -192,7 +235,7 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement: Climbing",
 		meta=(AllowPrivateAccess = "true"))
-	float MaxClimbSpeed = 200.f;
+	float MaxClimbSpeed = 100.f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement: Climbing",
 		meta=(AllowPrivateAccess = "true"))
@@ -202,21 +245,14 @@ private:
 		meta=(AllowPrivateAccess = "true"))
 	float MaxClimbableDegree = 60.f;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement: Climbing",
+		meta=(AllowPrivateAccess = "true"))
+	float MinimumHeightToClimb = 50.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement: Climbing",
+		meta=(AllowPrivateAccess = "true"))
+	UAnimMontage* IdleToClimbMontage;
+
 #pragma endregion
 
-public:
-
-	/**
-	 * @brief Toggle Climbing Movement
-	 *
-	 * @param bEnableClimb		Whether to enable climbing
-	 */
-	void ToggleClimbing(bool bEnableClimb);
-
-	/**
-	 * @brief Check if owner is climbing now
-	 *
-	 * @return bool			Return true if owner is climbing, otherwise return false
-	 */
-	bool IsClimbing() const;
 };
