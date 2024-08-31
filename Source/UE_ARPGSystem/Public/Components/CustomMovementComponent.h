@@ -80,7 +80,7 @@ private:
 	 *
 	 * @return bool	Return true if there is at least one climbable surface, and Return false if there is none.
 	 */
-	bool TraceClimbableSurfaces();
+	bool TraceClimbableSurfaces(bool bShowDebugShape = false, bool bDrawPersistentShapes = false);
 
 	/**
 	 * @brief Performs a line trace to detect is there a surface that blocked sight
@@ -89,7 +89,8 @@ private:
 	 * @param TraceStartOffset		The Offset from the eye's height
 	 * @return FHitResult			Return the hit result
 	 */
-	FHitResult TraceFromEyeHeight(float TraceDistance, float TraceStartOffset = 0.f);
+	FHitResult TraceFromEyeHeight(float TraceDistance, float TraceStartOffset = 0.f, 
+		bool bShowDebugShape = false, bool bDrawPersistentShapes = false);
 
 	/**
 	 * @brief Return a bool that shows owner can or can not start climbing
@@ -134,7 +135,15 @@ private:
 	 *
 	 * @return bool			Return true if reached floor
 	 */
-	bool CheckHasReachedFloor();
+	bool CheckHasReachedFloor(bool bShowDebugShape = false);
+
+
+	/**
+	 * @brief Reached ledge
+	 *
+	 * @return bool			Return true if reached ledge
+	 */
+	bool CheckHasReachedLedge(bool bShowDebugShape = false);
 
 	/**
 	 * @brief Return the climb rotation
@@ -248,6 +257,10 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement: Climbing",
 		meta=(AllowPrivateAccess = "true"))
 	float MinimumHeightToClimb = 50.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement: Climbing",
+		meta=(AllowPrivateAccess = "true"))
+	float MaximumHeightToReach = 50.f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement: Climbing",
 		meta=(AllowPrivateAccess = "true"))

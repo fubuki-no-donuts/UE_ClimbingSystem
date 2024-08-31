@@ -186,6 +186,15 @@ void UCustomMovementComponent::PhysClimb(float deltaTime, int32 Iterations)
 
 	/* Snap movement to climbable surfaces */
 	SnapMovementToClimbableSurfaces(deltaTime);
+
+	if (CheckHasReachedLedge(true))
+	{
+		Debug::Print(TEXT("Has Reached Ledge"), FColor::Green, 1);
+	}
+	else
+	{
+		Debug::Print(TEXT("Has NOT Reached Ledge"), FColor::Red, 1);
+	}
 }
 
 void UCustomMovementComponent::ProcessClimbableSurfaceInfo()
@@ -230,7 +239,7 @@ bool UCustomMovementComponent::CheckShouldStopClimbing()
 }
 
 // Check UnClimbable
-bool UCustomMovementComponent::CheckHasReachedFloor()
+bool UCustomMovementComponent::CheckHasReachedFloor(bool bShowDebugShape)
 {
 	const FVector DownVector = -UpdatedComponent->GetUpVector();
 	const FVector StartOffset = DownVector * MinimumHeightToClimb;
@@ -238,7 +247,7 @@ bool UCustomMovementComponent::CheckHasReachedFloor()
 	const FVector Start = UpdatedComponent->GetComponentLocation() + StartOffset;
 	const FVector End = Start + DownVector;
 
-	TArray<FHitResult> PossibleFloorHits = DoCapsuleTraceMultiByObject(Start, End, true);
+	TArray<FHitResult> PossibleFloorHits = DoCapsuleTraceMultiByObject(Start, End, bShowDebugShape);
 
 	if (PossibleFloorHits.IsEmpty())
 	{
@@ -259,6 +268,29 @@ bool UCustomMovementComponent::CheckHasReachedFloor()
 			return true;
 		}
 	}
+	return false;
+}
+
+// Check ledge
+bool UCustomMovementComponent::CheckHasReachedLedge(bool bShowDebugShape)
+{
+	const FHitResult FirstHit = TraceFromEyeHeight((MaximumHeightToReach * 2), MaximumHeightToReach, bShowDebugShape);
+
+	if (FirstHit.IsValidBlockingHit())
+	{
+		return false;
+	}
+
+	FVector SecondStart = FirstHit.TraceEnd;
+	FVector SecondEnd = SecondStart - UpdatedComponent->GetUpVector() * (MaximumHeightToReach * 2); 
+	const FHitResult SecondHit = DoLineTraceSingleByObject(SecondStart, SecondEnd, bShowDebugShape);
+
+	// TODO: Check with dot product
+	if (SecondHit.IsValidBlockingHit() && GetUnrotatedClimbVelocity().Z > 10.f)
+	{
+		return true;
+	}
+
 	return false;
 }
 
@@ -326,25 +358,25 @@ FVector UCustomMovementComponent::GetUnrotatedClimbVelocity() const
 	return UKismetMathLibrary::Quat_UnrotateVector(UpdatedComponent->GetComponentQuat(), Velocity);
 }
 
-bool UCustomMovementComponent::TraceClimbableSurfaces()
+bool UCustomMovementComponent::TraceClimbableSurfaces(bool bShowDebugShape, bool bDrawPersistentShapes)
 {
 	const FVector StartOffset = UpdatedComponent->GetForwardVector() * 30.f;
 	const FVector Start = UpdatedComponent->GetComponentLocation() + StartOffset;
 	const FVector End = Start + UpdatedComponent->GetForwardVector();
 
-	ClimbableSurfacesTracedResults = DoCapsuleTraceMultiByObject(Start, End, true);
+	ClimbableSurfacesTracedResults = DoCapsuleTraceMultiByObject(Start, End, bShowDebugShape, bDrawPersistentShapes);
 
 	return !ClimbableSurfacesTracedResults.IsEmpty();
 }
 
-FHitResult UCustomMovementComponent::TraceFromEyeHeight(float TraceDistance, float TraceStartOffset)
+FHitResult UCustomMovementComponent::TraceFromEyeHeight(float TraceDistance, float TraceStartOffset, bool bShowDebugShape, bool bDrawPersistentShapes)
 {
 	const FVector ComponentLocation = UpdatedComponent->GetComponentLocation();
 	const FVector EyeHeightOffset = UpdatedComponent->GetUpVector() * (CharacterOwner->BaseEyeHeight + TraceStartOffset);
 	const FVector Start = ComponentLocation + EyeHeightOffset;
 	const FVector End = Start + UpdatedComponent->GetForwardVector() * TraceDistance;
 
-	return DoLineTraceSingleByObject(Start, End);
+	return DoLineTraceSingleByObject(Start, End, bShowDebugShape, bDrawPersistentShapes);
 }
 
 #pragma endregion
