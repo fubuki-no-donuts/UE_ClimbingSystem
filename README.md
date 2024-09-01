@@ -29,10 +29,10 @@
 
 - 攀爬过程中遇到角度变化较大的位置
 
-![](./Assets/ClimbingSystem/Problems/01_Climbing_Hand_SnapToWall.gif)
-
-![](./Assets/ClimbingSystem/Problems/2_Climbing_FullBody_VerticalSurfaceChange.png)
-
+- 情况 1：![](./Assets/ClimbingSystem/Problems/01_Climbing_Hand_SnapToWall.gif)
+- 情况 2：![](./Assets/ClimbingSystem/Problems/2_Climbing_FullBody_VerticalSurfaceChange.png)
+  - 猜想：遇到墙面转向时，检测转向位置，让角色停在不会出现上图的情况的位置。如果玩家继续控制角色向转向位置移动，则直接播放蒙太奇，将角色从当前墙壁转到侧面的墙壁。
+  - 思路：[动作参考](https://www.mixamo.com/#/?page=1&query=free+hang)，在动画过程中设置转向，并将角色重新吸附到侧边墙壁。
 
 
 
