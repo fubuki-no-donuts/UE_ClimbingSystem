@@ -6,6 +6,9 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "CustomMovementComponent.generated.h"
 
+DECLARE_DELEGATE(FOnEnterClimbState)
+DECLARE_DELEGATE(FOnExitClimbState)
+
 UENUM(BlueprintType)
 namespace ECustomMovementMode
 {
@@ -49,6 +52,15 @@ protected:
 
 #pragma endregion
 
+#pragma region Delegate
+
+public:
+	FOnEnterClimbState OnEnterClimbStateDelegate;
+	FOnExitClimbState OnExitClimbStateDelegate;
+
+#pragma endregion
+
+
 #pragma region Getter & Setter
 
 public:
@@ -66,6 +78,11 @@ public:
 	 * @param bEnableClimb		Whether to enable climbing
 	 */
 	void ToggleClimbing(bool bEnableClimb);
+
+	/**
+	 * @brief Request hopping movement
+	 */
+	void RequestHopping();
 
 	/**
 	 * @brief Check if owner is climbing now
@@ -156,7 +173,7 @@ private:
 
 	void TryStartVaulting();
 
-	bool CanStartVaulting(FVector& OutVaultStartPosition, FVector& OutVaultLandPosition);
+	bool CanStartVaulting(FVector& OutVaultStartPosition, FVector& OutVaultLandPosition, bool bShowDebugShape = false);
 
 	/**
 	 * @brief Return the climb rotation
@@ -184,6 +201,13 @@ private:
 	void OnClimbMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
 	void SetMotionWarpTarget(const FName& InWarpTargetName, const FVector& InTargetPosition);
+
+	bool CheckCanHopUp(FVector& OutHopUpTargetPosition, bool bShowDebugShape = false);
+	void HandleHopUp();
+
+	bool CheckCanHopDown(FVector& OutHopDownTargetPosition, bool bShowDebugShape = false);
+	void HandleHopDown();
+
 
 #pragma endregion
 
@@ -295,6 +319,14 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement: Climbing",
 		meta=(AllowPrivateAccess = "true"))
 	UAnimMontage* VaultMontage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement: Climbing",
+		meta=(AllowPrivateAccess = "true"))
+	UAnimMontage* HopUpMontage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement: Climbing",
+		meta=(AllowPrivateAccess = "true"))
+	UAnimMontage* HopDownMontage;
 
 #pragma endregion
 

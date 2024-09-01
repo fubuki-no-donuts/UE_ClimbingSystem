@@ -80,13 +80,14 @@ public:
 
 private:
 
+	void AddInputMappingContext(UInputMappingContext* ContextToAdd, int32 InPriority);
+	void RemoveInputMappingContext(UInputMappingContext* ContextToAdd);
+
 	/**
-	 * @brief Called for movement input
+	 * @brief Called for ground movement input
 	 *
 	 * @param Value Movement input vector
 	 */
-	void Move(const FInputActionValue& Value);
-
 	void HandleGroundMovementInput(const FInputActionValue& Value);
 
 	/**
@@ -98,19 +99,10 @@ private:
 
 #pragma endregion
 
-#pragma region MotionWarping
-public:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = MotionWarping, meta = (AllowPrivateAccess = "true"))
-	UMotionWarpingComponent* MotionWarpingComponent;
-
-	/* Returns MotionWarpingComponent subobject */
-	FORCEINLINE class UMotionWarpingComponent* GetMotionWarpingComponent() const { return MotionWarpingComponent; }
-#pragma endregion
-
-
 #pragma region ClimbSystem
 
 public:
+
 	/* Custom Movement Component */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	UCustomMovementComponent* CustomMovementComponent;
@@ -118,6 +110,22 @@ public:
 	/* Climb Action Input Mapping */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* ClimbAction;
+
+
+	/** Climb MappingContext */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputMappingContext* ClimbMappingContext;
+
+	/** Climb Move Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* ClimbMoveAction;
+
+	/* Climb Hop Action Input Mapping */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* ClimbHopAction;
+
+	void OnPlayerEnterClimbState();
+	void OnPlayerExitClimbState();
 
 	void HandleClimbMovementInput(const FInputActionValue& Value);
 
@@ -128,9 +136,25 @@ public:
 	 */
 	void OnClimbActionStarted(const FInputActionValue& Value);
 
+	/**
+	 * @brief Climb Hop Action when input mapping triggered
+	 *
+	 * @param Value Movement input vector
+	 */
+	void OnClimbHopActionStarted(const FInputActionValue& Value);
+
 	/* Returns CustomMovementComponent subobject */
 	FORCEINLINE class UCustomMovementComponent* GetCustomMovementComponent() const { return CustomMovementComponent; }
 
+#pragma endregion
+
+#pragma region MotionWarping
+public:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = MotionWarping, meta = (AllowPrivateAccess = "true"))
+	UMotionWarpingComponent* MotionWarpingComponent;
+
+	/* Returns MotionWarpingComponent subobject */
+	FORCEINLINE class UMotionWarpingComponent* GetMotionWarpingComponent() const { return MotionWarpingComponent; }
 #pragma endregion
 
 };

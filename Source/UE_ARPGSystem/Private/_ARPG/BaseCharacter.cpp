@@ -67,14 +67,12 @@ void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//Add Input Mapping Context
-	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
+	AddInputMappingContext(DefaultMappingContext, 0);
+
+	if (CustomMovementComponent)
 	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem 
-			= ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
-		{
-			Subsystem->AddMappingContext(DefaultMappingContext, 0);
-		}
+		CustomMovementComponent->OnEnterClimbStateDelegate.BindUObject(this, &ThisClass::OnPlayerEnterClimbState);
+		CustomMovementComponent->OnExitClimbStateDelegate.BindUObject(this, &ThisClass::OnPlayerExitClimbState);
 	}
 }
 
@@ -90,13 +88,15 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
 		// Moving
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ABaseCharacter::Move);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ABaseCharacter::HandleGroundMovementInput);
+		EnhancedInputComponent->BindAction(ClimbMoveAction, ETriggerEvent::Triggered, this, &ABaseCharacter::HandleClimbMovementInput);
 
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABaseCharacter::Look);
 
 		// Climbing
 		EnhancedInputComponent->BindAction(ClimbAction, ETriggerEvent::Started, this, &ABaseCharacter::OnClimbActionStarted);
+		EnhancedInputComponent->BindAction(ClimbHopAction, ETriggerEvent::Started, this, &ABaseCharacter::OnClimbHopActionStarted);
 	}
 	else
 	{
@@ -106,20 +106,38 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 #pragma region EnhanceInput
 
-void ABaseCharacter::Move(const FInputActionValue& Value)
+void ABaseCharacter::AddInputMappingContext(UInputMappingContext* ContextToAdd, int32 InPriority)
 {
-	if (!CustomMovementComponent)
+	if (!ContextToAdd)
 	{
-		return;
+		return ;
 	}
 
-	if (CustomMovementComponent->IsClimbing())
+	//Add Input Mapping Context
+	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
 	{
-		HandleClimbMovementInput(Value);
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem 
+			= ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		{
+			Subsystem->AddMappingContext(ContextToAdd, InPriority);
+		}
 	}
-	else
+}
+
+void ABaseCharacter::RemoveInputMappingContext(UInputMappingContext* ContextToAdd)
+{
+	if (!ContextToAdd)
 	{
-		HandleGroundMovementInput(Value);
+		return ;
+	}
+
+	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem 
+			= ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		{
+			Subsystem->RemoveMappingContext(ContextToAdd);
+		}
 	}
 }
 
@@ -152,6 +170,18 @@ void ABaseCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
+void ABaseCharacter::OnPlayerEnterClimbState()
+{
+	Debug::Print(TEXT("Enter climb state"));
+	AddInputMappingContext(ClimbMappingContext, 1);
+}
+
+void ABaseCharacter::OnPlayerExitClimbState()
+{
+	Debug::Print(TEXT("Exit climb state"));
+	RemoveInputMappingContext(ClimbMappingContext);
+}
+
 #pragma endregion
 
 #pragma region ClimbSystem
@@ -176,9 +206,6 @@ void ABaseCharacter::HandleClimbMovementInput(const FInputActionValue& Value)
 
 void ABaseCharacter::OnClimbActionStarted(const FInputActionValue& Value)
 {
-	// Test
-	//Debug::Print(TEXT("Climbing Action Started!"));
-
 	if (CustomMovementComponent == nullptr) 
 	{
 		Debug::Print(TEXT("There is no CustomMovementComponent exist!"));
@@ -192,6 +219,14 @@ void ABaseCharacter::OnClimbActionStarted(const FInputActionValue& Value)
 	else
 	{
 		CustomMovementComponent->ToggleClimbing(true);
+	}
+}
+
+void ABaseCharacter::OnClimbHopActionStarted(const FInputActionValue& Value)
+{
+	if (CustomMovementComponent)
+	{
+		CustomMovementComponent->RequestHopping();
 	}
 }
 
