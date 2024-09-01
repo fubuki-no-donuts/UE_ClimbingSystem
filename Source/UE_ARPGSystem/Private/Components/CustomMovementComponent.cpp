@@ -34,6 +34,7 @@ void UCustomMovementComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
                                              FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
 }
 
 void UCustomMovementComponent::OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode)
@@ -93,6 +94,20 @@ float UCustomMovementComponent::GetMaxAcceleration() const
 	return Super::GetMaxAcceleration();
 }
 
+FVector UCustomMovementComponent::ConstrainAnimRootMotionVelocity(const FVector& RootMotionVelocity,
+	const FVector& CurrentVelocity) const
+{
+	// Use Root Motion Velocity instead if the playing montage has valid root motion
+	if (IsFalling() && OwningPlayerAnimInstance && OwningPlayerAnimInstance->IsAnyMontagePlaying())
+	{
+		return RootMotionVelocity;
+	}
+	else
+	{
+		return Super::ConstrainAnimRootMotionVelocity(RootMotionVelocity, CurrentVelocity);
+	}
+}
+
 #pragma endregion
 
 #pragma region ClimbCore
@@ -105,9 +120,9 @@ void UCustomMovementComponent::ToggleClimbing(bool bEnableClimb)
 		{
 			PlayClimbMontage(IdleToClimbMontage);
 		}
-		else
+		else if (CanStartClimbingDown())
 		{
-			Debug::Print(TEXT("Can NOT Start Climbing!"));
+			PlayClimbMontage(ClimbToDownMontage);
 		}
 	}
 	else
@@ -116,16 +131,54 @@ void UCustomMovementComponent::ToggleClimbing(bool bEnableClimb)
 	}
 }
 
-bool UCustomMovementComponent::CanStartClimbing()
+bool UCustomMovementComponent::CanStartClimbing(bool bShowDebugShape)
 {
 	if (IsFalling() or
-		!TraceClimbableSurfaces() or
-		!TraceFromEyeHeight(100.f).bBlockingHit)
+		!TraceClimbableSurfaces(bShowDebugShape) or
+		!TraceFromEyeHeight(100.f, 0, bShowDebugShape).bBlockingHit)
 	{
 		return false;
 	}
 
 	return true;
+}
+
+bool UCustomMovementComponent::CanStartClimbingDown(bool bShowDebugShape)
+{
+	// Climbing up is priority
+	if (IsFalling() || CanStartClimbing())
+	{
+		return false;
+	}
+
+	const float HalfHeight = CharacterOwner->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+	const FVector ActorLocation = GetActorLocation() + UpdatedComponent->GetForwardVector() * MaximumHeightToReach;
+	const FVector FirstStart = ActorLocation - FVector(0, 0, HalfHeight);
+
+	// Height need to be higher than the character,
+	// otherwise the height is no need to climb on so there is no need to climb down either.
+	// It is same as the condition to start climbing up.
+	// The most important: it is assumed here that there is a complete plane below the edge and there is no concave defect.
+	const FVector FirstEnd = FirstStart - FVector(0, 0, MaximumHeightToReach + HalfHeight * 2); 
+
+	FHitResult FirstHit = DoLineTraceSingleByObject(FirstStart, FirstEnd, bShowDebugShape);
+
+	if (FirstHit.IsValidBlockingHit())
+	{
+		return false;
+	}
+
+	const FVector SecondStart = FirstEnd;
+	const FVector SecondEnd = SecondStart - UpdatedComponent->GetForwardVector() * (MaximumHeightToReach);
+
+	FHitResult SecondHit = DoLineTraceSingleByObject(SecondStart, SecondEnd, bShowDebugShape);
+
+	if (SecondHit.IsValidBlockingHit())
+	{
+		return true;
+	}
+
+	return false;
 }
 
 void UCustomMovementComponent::StartClimbing()
@@ -187,13 +240,9 @@ void UCustomMovementComponent::PhysClimb(float deltaTime, int32 Iterations)
 	/* Snap movement to climbable surfaces */
 	SnapMovementToClimbableSurfaces(deltaTime);
 
-	if (CheckHasReachedLedge(true))
+	if (CheckHasReachedLedge())
 	{
-		Debug::Print(TEXT("Has Reached Ledge"), FColor::Green, 1);
-	}
-	else
-	{
-		Debug::Print(TEXT("Has NOT Reached Ledge"), FColor::Red, 1);
+		PlayClimbMontage(ClimbToTopMontage);
 	}
 }
 
@@ -342,9 +391,15 @@ void UCustomMovementComponent::PlayClimbMontage(UAnimMontage* MontageToPlay)
 
 void UCustomMovementComponent::OnClimbMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	if (Montage == IdleToClimbMontage)
+	if (Montage == IdleToClimbMontage || Montage == ClimbToDownMontage)
 	{
 		StartClimbing();
+		StopMovementImmediately(); // Clear Root Motion speed
+	}
+
+	if (Montage == ClimbToTopMontage)
+	{
+		SetMovementMode(MOVE_Walking);
 	}
 }
 

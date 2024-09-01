@@ -44,6 +44,8 @@ protected:
 
 	virtual float GetMaxAcceleration() const override;
 
+	virtual FVector ConstrainAnimRootMotionVelocity(const FVector& RootMotionVelocity, const FVector& CurrentVelocity) const override;
+
 #pragma endregion
 
 #pragma region Getter & Setter
@@ -97,7 +99,14 @@ private:
 	 *
 	 * @return bool 
 	 */
-	bool CanStartClimbing();
+	bool CanStartClimbing(bool bShowDebugShape = false);
+
+	/**
+	 * @brief Return a bool that shows owner can or can not climbing down 
+	 *
+	 * @return bool
+	 */
+	bool CanStartClimbingDown(bool bShowDebugShape = false);
 
 	/**
 	 * @brief Start Climbing
@@ -265,6 +274,14 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement: Climbing",
 		meta=(AllowPrivateAccess = "true"))
 	UAnimMontage* IdleToClimbMontage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement: Climbing",
+		meta=(AllowPrivateAccess = "true"))
+	UAnimMontage* ClimbToTopMontage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement: Climbing",
+		meta=(AllowPrivateAccess = "true"))
+	UAnimMontage* ClimbToDownMontage;
 
 #pragma endregion
 
