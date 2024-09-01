@@ -17,6 +17,7 @@ namespace ECustomMovementMode
 
 class UAnimMontage;
 class UAnimInstance;
+class ABaseCharacter;
 
 /**
  * 
@@ -146,13 +147,16 @@ private:
 	 */
 	bool CheckHasReachedFloor(bool bShowDebugShape = false);
 
-
 	/**
 	 * @brief Reached ledge
 	 *
 	 * @return bool			Return true if reached ledge
 	 */
 	bool CheckHasReachedLedge(bool bShowDebugShape = false);
+
+	void TryStartVaulting();
+
+	bool CanStartVaulting(FVector& OutVaultStartPosition, FVector& OutVaultLandPosition);
 
 	/**
 	 * @brief Return the climb rotation
@@ -179,6 +183,8 @@ private:
 	UFUNCTION()
 	void OnClimbMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
+	void SetMotionWarpTarget(const FName& InWarpTargetName, const FVector& InTargetPosition);
+
 #pragma endregion
 
 #pragma region ClimbCoreVariable
@@ -194,6 +200,9 @@ private:
 
 	UPROPERTY()
 	UAnimInstance* OwningPlayerAnimInstance;
+
+	UPROPERTY()
+	ABaseCharacter* OwningPlayerCharacter;
 
 #pragma endregion
 
@@ -282,6 +291,10 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement: Climbing",
 		meta=(AllowPrivateAccess = "true"))
 	UAnimMontage* ClimbToDownMontage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement: Climbing",
+		meta=(AllowPrivateAccess = "true"))
+	UAnimMontage* VaultMontage;
 
 #pragma endregion
 

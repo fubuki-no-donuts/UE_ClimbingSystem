@@ -14,6 +14,7 @@ class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
 class UCustomMovementComponent;
+class UMotionWarpingComponent;
 
 struct FInputActionValue;
 
@@ -96,6 +97,16 @@ private:
 	void Look(const FInputActionValue& Value);
 
 #pragma endregion
+
+#pragma region MotionWarping
+public:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = MotionWarping, meta = (AllowPrivateAccess = "true"))
+	UMotionWarpingComponent* MotionWarpingComponent;
+
+	/* Returns MotionWarpingComponent subobject */
+	FORCEINLINE class UMotionWarpingComponent* GetMotionWarpingComponent() const { return MotionWarpingComponent; }
+#pragma endregion
+
 
 #pragma region ClimbSystem
 
