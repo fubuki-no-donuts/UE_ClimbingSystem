@@ -7,8 +7,9 @@
 - [ ] 攀爬系统
   - [x] 攀爬系统基础框架
     - [x] 四向攀爬动作，GroundIdle 与攀爬切换
-    - [x] 支持边缘检测，攀爬至边缘登顶（Climb to Top），边缘进入攀爬（Down to Climp）
-    - [x] 支持 ControlRig 调整动画的 RootMotion，以及手脚的 IK 检测
+    - [x] 边缘检测，攀爬至边缘登顶（Climb to Top），边缘进入攀爬（Down to Climp）
+    - [x] ControlRig 调整动画的 RootMotion，以及手脚的 IK 检测
+  - [x] MotionWarping 调整动画的 RootMotion，实现角色对适当高度障碍物的 Vaulting 动作
 - [ ] 背包系统 & 锻造系统
 - [ ] 任务系统 & 成就系统、
 - [ ] UI 管理系统 & 红点系统
