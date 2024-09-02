@@ -25,7 +25,7 @@ class ABaseCharacter;
 /**
  * 
  */
-UCLASS()
+UCLASS(Blueprintable, BlueprintType, ClassGroup = (CustomComponents), meta=(BlueprintSpawnableComponent))
 class UE_ARPGSYSTEM_API UCustomMovementComponent : public UCharacterMovementComponent
 {
 	GENERATED_BODY()
