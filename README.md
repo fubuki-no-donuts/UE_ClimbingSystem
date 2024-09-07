@@ -1,42 +1,35 @@
 # ARPG System
 
-目标是制作一个 ARPG 类型的游戏模板
 
-## 正在进行
+## 项目描述
 
-- [ ] 攀爬系统
-  - [ ] Hop Left / Right
-- [ ] 背包系统 & 锻造系统
-- [ ] 任务系统 & 成就系统
-- [ ] UI 管理系统 & 红点系统
+本项目旨在实现一个 ARPG 类型的游戏模板，实现游戏中的大部分底层框架，包括但不限于：动作系统、任务系统、背包系统、数值系统、UI 系统等
 
-## 目前已实现
+## 项目进度
 
-- [x] 攀爬系统
-  - [x] 攀爬系统基础框架
-  - [x] 四向攀爬动作，GroundIdle 与攀爬切换
-  - [x] 边缘检测，攀爬至边缘登顶（Climb to Top），边缘进入攀爬（Down to Climp）
-  - [x] ControlRig 调整动画的 RootMotion，以及手脚的 IK 检测
-  - [x] MotionWarping 调整动画的 RootMotion，实现角色对适当高度障碍物的 Vaulting，攀爬时的 HopUp 和 HopDown 动作
-  - [x] 分离地面运动输入上下文和攀爬输入上下文
-
-## 计划中
+本项目预计实现的系统，
 
 - [ ] 运动系统
-- [ ] AI 系统
-- [ ] GAS 系统
+  - [x] [攀爬系统]()
+  - [ ] 战斗系统
+- [ ] 任务系统
+- [ ] 背包系统
+- [ ] 数值系统
+  - [ ] 伤害系统
+  - [ ] 成长系统
+- [ ] UI 系统
+  - [ ] 红点系统
+
+<!-- ## 成果展示 -->
 
 
 ## 遗留问题
 
-### 攀爬系统
+各系统中遗留问题的总结
 
-- 攀爬过程中遇到角度变化较大的位置
+- [攀爬系统的遗留问题]()
 
-- 情况 1：![](./Assets/ClimbingSystem/Problems/01_Climbing_Hand_SnapToWall.gif)
-- 情况 2：![](./Assets/ClimbingSystem/Problems/2_Climbing_FullBody_VerticalSurfaceChange.png)
-  - 猜想：遇到墙面转向时，检测转向位置，让角色停在不会出现上图的情况的位置。如果玩家继续控制角色向转向位置移动，则直接播放蒙太奇，将角色从当前墙壁转到侧面的墙壁。
-  - 思路：[动作参考](https://www.mixamo.com/#/?page=1&query=free+hang)，在动画过程中设置转向，并将角色重新吸附到侧边墙壁。
+
 
 
 
