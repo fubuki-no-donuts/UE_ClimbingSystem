@@ -39,10 +39,10 @@ void UCustomMovementComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// Test
-	FVector Test1;
-	FVector Test2;
-	CanStartVaulting(Test1, Test2, true);
-	CanStartClimbing(true);
+	//FVector Test1;
+	//FVector Test2;
+	//CanStartVaulting(Test1, Test2, true);
+	//CanStartClimbing(true);
 }
 
 void UCustomMovementComponent::OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode)
