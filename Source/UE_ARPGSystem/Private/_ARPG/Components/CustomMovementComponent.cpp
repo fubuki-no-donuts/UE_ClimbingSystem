@@ -1,12 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Components/CustomMovementComponent.h"
+#include "_ARPG/Components/CustomMovementComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "MotionWarpingComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "_ARPG/BaseCharacter.h"
+#include "_ARPG/Characters/BaseCharacter/BaseCharacter.h"
 #include "UE_ARPGSystem/DebugHelper/DebugHelper.h"
 
 
