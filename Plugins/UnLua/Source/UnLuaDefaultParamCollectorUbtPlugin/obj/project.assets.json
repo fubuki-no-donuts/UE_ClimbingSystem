@@ -96,11 +96,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\Documents\\GitHub\\Project_UE_ARPGSystem\\Plugins\\UnLua\\Source\\UnLuaDefaultParamCollectorUbtPlugin\\UnLuaDefaultParamCollectorUbtPlugin.ubtplugin.csproj",
+      "projectUniqueName": "D:\\Documents\\GitHub\\Project_UE\\Project_UE_ARPGSystem\\Plugins\\UnLua\\Source\\UnLuaDefaultParamCollectorUbtPlugin\\UnLuaDefaultParamCollectorUbtPlugin.ubtplugin.csproj",
       "projectName": "UnLuaDefaultParamCollectorUbtPlugin",
-      "projectPath": "D:\\Documents\\GitHub\\Project_UE_ARPGSystem\\Plugins\\UnLua\\Source\\UnLuaDefaultParamCollectorUbtPlugin\\UnLuaDefaultParamCollectorUbtPlugin.ubtplugin.csproj",
+      "projectPath": "D:\\Documents\\GitHub\\Project_UE\\Project_UE_ARPGSystem\\Plugins\\UnLua\\Source\\UnLuaDefaultParamCollectorUbtPlugin\\UnLuaDefaultParamCollectorUbtPlugin.ubtplugin.csproj",
       "packagesPath": "C:\\Users\\Shin\\.nuget\\packages\\",
-      "outputPath": "D:\\Documents\\GitHub\\Project_UE_ARPGSystem\\Plugins\\UnLua\\Source\\UnLuaDefaultParamCollectorUbtPlugin\\obj\\",
+      "outputPath": "D:\\Documents\\GitHub\\Project_UE\\Project_UE_ARPGSystem\\Plugins\\UnLua\\Source\\UnLuaDefaultParamCollectorUbtPlugin\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -128,11 +128,6 @@
         "warnAsError": [
           "NU1605"
         ]
-      },
-      "restoreAuditProperties": {
-        "enableAudit": "true",
-        "auditLevel": "low",
-        "auditMode": "direct"
       }
     },
     "frameworks": {
@@ -150,8 +145,7 @@
           "net47",
           "net471",
           "net472",
-          "net48",
-          "net481"
+          "net48"
         ],
         "assetTargetFallback": true,
         "warn": true,
@@ -160,7 +154,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.204\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "D:\\Programs\\UnrealEngine\\UE_5.3\\Engine\\Binaries\\ThirdParty\\DotNet\\6.0.302\\windows\\sdk\\6.0.302\\RuntimeIdentifierGraph.json"
       }
     }
   }
