@@ -28,6 +28,7 @@ public:
 
 	/* State Management */
 public:
+	
 	UFUNCTION(BlueprintCallable, Category = "StackStateMachine")
 	void PushState(TScriptInterface<IStackStateInterface> NewState);
 
