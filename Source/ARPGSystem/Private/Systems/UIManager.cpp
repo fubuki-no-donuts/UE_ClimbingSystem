@@ -3,12 +3,15 @@
 
 #include "Systems/UIManager.h"
 
+#include "Blueprint/UserWidget.h"
+#include "UI/StackWidgetBase.h"
+#include "Misc/ConfigCacheIni.h"
 
 void UUIManager::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-
-	InitUI();
+	
+	UIRegisterTable = LoadObject<UDataTable>(this, TEXT("/Game/_ARPG/Data/DT_RegisterInfo_UI.DT_RegisterInfo_UI"));
 }
 
 void UUIManager::Deinitialize()
@@ -29,7 +32,7 @@ void UUIManager::PushState(TScriptInterface<IStackStateInterface> NewState)
 	}
 
 	// Push New State
-	States.Push(NewState);
+	UIStates.Push(NewState);
 	NewState->EnterState(EStackAction::Push);
 
 	// Broadcast New State Pushed
@@ -41,6 +44,7 @@ void UUIManager::PopState()
 	// No Valid State to pop
 	if (GetStateCount() < 0)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("No Valid State to Pop up!"));
 		return ;
 	}
 
@@ -49,7 +53,7 @@ void UUIManager::PopState()
 	{
 		OldState->ExitState(EStackAction::Pop);
 	}
-	States.Pop();
+	UIStates.Pop();
 
 	if (GetStateCount() > 0)
 	{
@@ -90,23 +94,54 @@ void UUIManager::StatePopped(TScriptInterface<IStackStateInterface> PoppedState)
 	}
 }
 
-void UUIManager::InitUI()
-{
-	UIClassTable = LoadObject<UDataTable>(this, TEXT("/Game/_ARPG/Data/DT_UI_Info.DT_UI_Info"));
-	if (UIClassTable)
-	{
-		for (FName RowName : UIClassTable->GetRowNames())
-		{
-			UE_LOG(LogTemp, Display, TEXT("%s"), *RowName.ToString());
-		}
-	}
-	
-	// TODO: 提前创建并初始化
-}
-
 UStackWidgetBase* UUIManager::OpenUI(FName UIName)
 {
-	// TODO: 先去实例中找, 没有就创建并入栈
+	auto LocalPlayerController = GetGameInstance()->GetFirstLocalPlayerController();
+	if (LocalPlayerController == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("LocalPlayerController NOT Valid!"));
+		return nullptr;
+	}
+	
+	// Exist?
+	auto TryFoundInstance = UIInstances.Find(UIName);
+	if (TryFoundInstance)
+	{
+		return *TryFoundInstance;
+	}
+
+	// Nope
+	if (UIRegisterTable == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UIRegisterTable NOT Valid!"));
+		return nullptr;
+	}
+	
+	FRegisterInfoUI* FoundInfo = UIRegisterTable->FindRow<FRegisterInfoUI>(UIName, TEXT("UIRegisterTable"));
+	if (FoundInfo == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UIName: %s NOT Valid!"), *UIName.ToString());
+		return nullptr;
+	}
+
+	UClass* LoadWidgetClass = FoundInfo->WidgetClass.LoadSynchronous();
+	if (LoadWidgetClass == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UIName: %s WidgetClass NOT Valid!"), *UIName.ToString());
+		return nullptr;
+	}
+	
+	auto NewUI = CreateWidget<UStackWidgetBase>(
+		LocalPlayerController,
+		LoadWidgetClass);
+	if (NewUI)
+	{
+		PushState(NewUI); // If a NewState is created, it must be pushed into stack.
+		UIInstances.Add(UIName, NewUI);
+		return NewUI;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("UIName: %s CreateWidget Failed!"), *UIName.ToString());
 	return nullptr;
 }
 
